@@ -1,29 +1,69 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import SimpleMDE from 'react-simplemde-editor';
 
+import axios from '../../axios.js';
 import { isAuthedSelector } from '../../redux/slices/auth';
 import 'easymde/dist/easymde.min.css';
 import styles from './AddPost.module.scss';
 
 export const AddPost = () => {
+  const navigate = useNavigate();
   const isAuth = useSelector(isAuthedSelector);
-  const imageUrl = '';
+  // const imageUrl = '';
   const [title, setTitle] = React.useState('');
   const [tags, setTags] = React.useState('');
-  const [value, setValue] = React.useState('');
+  const [text, setText] = React.useState('');
+  const [imageUrl, setImageUrl] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const inputImageRef = useRef(null);
 
-  const handleChangeFile = () => {};
+  const handleChangeFile = async (evt) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', evt.target.files[0]);
+      const { data } = await axios.post('/upload', formData);
+      console.log(data);
+      setImageUrl(data.url);
+    } catch (err) {
+      console.warn(err);
+      alert('Ошибка загрузки изображения');
+    }
+  };
 
-  const onClickRemoveImage = () => {};
+  const onClickRemoveImage = () => {
+    setImageUrl('');
+  };
 
   const onChange = React.useCallback((value) => {
-    setValue(value);
+    setText(value);
   }, []);
+
+  const onSubmit = async () => {
+    try {
+      setLoading(true);
+
+      const postData = {
+        title,
+        text,
+        imageUrl,
+        tags,
+      };
+
+      const { data } = await axios.post('/posts', postData);
+      const id = data._id;
+      navigate(`/posts/${id}`);
+    } catch (err) {
+      console.warn(err);
+      alert('Ошибка загрузки статьи');
+    }
+  };
+
+  const onReset = () => {};
 
   const options = React.useMemo(
     () => ({
@@ -46,10 +86,19 @@ export const AddPost = () => {
 
   return (
     <Paper style={{ padding: 30 }}>
-      <Button variant="outlined" size="large">
+      <Button
+        onClick={() => inputImageRef.current.click()}
+        variant="outlined"
+        size="large"
+      >
         Загрузить превью
       </Button>
-      <input type="file" onChange={handleChangeFile} hidden />
+      <input
+        ref={inputImageRef}
+        type="file"
+        onChange={handleChangeFile}
+        hidden
+      />
       {imageUrl && (
         <Button variant="contained" color="error" onClick={onClickRemoveImage}>
           Удалить
@@ -82,16 +131,18 @@ export const AddPost = () => {
       />
       <SimpleMDE
         className={styles.editor}
-        value={value}
+        value={text}
         onChange={onChange}
         options={options}
       />
       <div className={styles.buttons}>
-        <Button size="large" variant="contained">
+        <Button onClick={onSubmit} size="large" variant="contained">
           Опубликовать
         </Button>
         <a href="/">
-          <Button size="large">Отмена</Button>
+          <Button onClick={onReset} size="large">
+            Отмена
+          </Button>
         </a>
       </div>
     </Paper>
