@@ -4,7 +4,6 @@ import { Post } from '../components/Post';
 import { Index } from '../components/AddComment';
 import { CommentsBlock } from '../components/CommentsBlock';
 import axios from '../axios';
-import { PostSkeleton } from '../components/Post/Skeleton';
 import ReactMarkdown from 'react-markdown';
 
 export const FullPost = () => {

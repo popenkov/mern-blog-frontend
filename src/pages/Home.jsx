@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Grid from '@mui/material/Grid';
@@ -15,31 +15,60 @@ export const Home = () => {
   const { posts, tags } = useSelector((state) => state.posts);
   const arePostsLoading = posts.status === 'loading';
   const areTagsLoading = tags.status === 'loading';
+  const [sort, setSort] = useState('default');
+  const [value, setValue] = useState(0);
   useEffect(() => {
-    dispatch(fetchPosts());
+    dispatch(fetchPosts('default'));
     dispatch(fetchTags());
   }, []);
+
+  const setNewPosts = () => {
+    setSort((prev) => (prev = 'default'));
+    dispatch(fetchPosts(sort));
+  };
+  const setPopularPosts = () => {
+    setSort((prev) => (prev = 'popular'));
+    dispatch(fetchPosts(sort));
+  };
+
+  function a11yProps(index) {
+    console.log('index', index);
+    return {
+      id: `simple-tab-${index}`,
+      'aria-controls': `simple-tabpanel-${index}`,
+    };
+  }
+  const handleChange = (newValue) => {
+    console.log(newValue);
+    setValue((prev) => (prev = newValue));
+  };
+
   return (
     <>
       <Tabs
+        value={value}
+        onChange={handleChange}
         style={{ marginBottom: 15 }}
-        value={0}
         aria-label="basic tabs example"
       >
-        <Tab label="Новые" />
-        <Tab label="Популярные" />
+        <Tab
+          {...a11yProps(0)}
+          value={value}
+          onClick={setNewPosts}
+          label="Новые"
+        />
+        <Tab {...a11yProps(1)} onClick={setPopularPosts} label="Популярные" />
       </Tabs>
       <Grid container spacing={4}>
         <Grid xs={8} item>
           {(arePostsLoading ? [...Array(5)] : posts.items).map((obj, index) =>
             arePostsLoading ? (
-              <Post isLoading />
+              <Post key={index} isLoading />
             ) : (
               <Post
                 key={obj?._id}
                 id={obj?._id}
                 title={obj?.title}
-                //imageUrl="https://res.cloudinary.com/practicaldev/image/fetch/s--UnAfrEG8--/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/uploads/articles/icohm5g0axh9wjmu4oc3.png"
                 imageUrl={
                   obj?.imageUrl ? `http://localhost:4444${obj?.imageUrl}` : ''
                 }
@@ -53,7 +82,7 @@ export const Home = () => {
             )
           )}
         </Grid>
-        <Grid xs={4} item>
+        {/* <Grid xs={4} item>
           <TagsBlock items={tags.items} isLoading={areTagsLoading} />
           <CommentsBlock
             items={[
@@ -74,7 +103,7 @@ export const Home = () => {
             ]}
             isLoading={false}
           />
-        </Grid>
+        </Grid> */}
       </Grid>
     </>
   );

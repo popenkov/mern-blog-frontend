@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
@@ -12,15 +12,30 @@ import 'easymde/dist/easymde.min.css';
 import styles from './AddPost.module.scss';
 
 export const AddPost = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const isAuth = useSelector(isAuthedSelector);
-  // const imageUrl = '';
+
   const [title, setTitle] = React.useState('');
   const [tags, setTags] = React.useState('');
   const [text, setText] = React.useState('');
   const [imageUrl, setImageUrl] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const inputImageRef = useRef(null);
+
+  const isEditing = !!id;
+
+  useEffect(() => {
+    if (isEditing) {
+      axios.get(`/posts/${id}`).then((data) => {
+        const { title, text, tags, imageUrl } = data.data;
+        setTitle(title);
+        setText(text);
+        setTags(tags.join(','));
+        setImageUrl(imageUrl);
+      });
+    }
+  }, []);
 
   const handleChangeFile = async (evt) => {
     try {
@@ -54,9 +69,12 @@ export const AddPost = () => {
         tags, //: tags.split(',')
       };
 
-      const { data } = await axios.post('/posts', postData);
-      const id = data._id;
-      navigate(`/posts/${id}`);
+      const { data } = isEditing
+        ? await axios.patch(`/posts/${id}`, postData)
+        : await axios.post('/posts', postData);
+
+      const _id = !isEditing ? data._id : id;
+      navigate(`/posts/${_id}`);
     } catch (err) {
       console.warn(err);
       alert('Ошибка загрузки статьи');
@@ -137,7 +155,7 @@ export const AddPost = () => {
       />
       <div className={styles.buttons}>
         <Button onClick={onSubmit} size="large" variant="contained">
-          Опубликовать
+          {isEditing ? 'Редактировать' : 'Опубликовать'}
         </Button>
         <a href="/">
           <Button onClick={onReset} size="large">
