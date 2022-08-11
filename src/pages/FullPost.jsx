@@ -5,6 +5,7 @@ import { Index } from '../components/AddComment';
 import { CommentsBlock } from '../components/CommentsBlock';
 import axios from '../axios';
 import { PostSkeleton } from '../components/Post/Skeleton';
+import ReactMarkdown from 'react-markdown';
 
 export const FullPost = () => {
   const { id } = useParams();
@@ -32,7 +33,9 @@ export const FullPost = () => {
         <Post
           id={post.id}
           title={post.title}
-          imageUrl={post.imageUrl}
+          imageUrl={
+            post.imageUrl ? `http://localhost:4444${post.imageUrl}` : ''
+          }
           user={post.user}
           createdAt={post.createdAt}
           viewsCount={post.viewsCount}
@@ -40,7 +43,7 @@ export const FullPost = () => {
           tags={post.tags}
           isFullPost
         >
-          <p dangerouslySetInnerHTML={{ __html: post.text }}></p>
+          <ReactMarkdown children={post.text} />
         </Post>
       )}
 
